@@ -42,11 +42,13 @@ bool RA073177::loadInstance(const char* filename) {
 //--------------------------------[ Solve ]----------------------------------//
 
 RA073177::ResultType RA073177::solve(const double max_time) {
-    cout << "\n--> Resolvendo por um super-ultra-mega-hiper algoritmo doidao em "
-         << max_time << " segundos."
+    list<ListGraph::Node> solution = randomSolution();
+    
+     cout << "\n--> Valor da minha solução "
+         << solutionValue(solution) << " ."
          << endl;
-
-    return RA073177::EXACT_NO_SOLUTION;
+    
+     return RA073177::EXACT_NO_SOLUTION;
 }
 
 //--------------------------------[ Solve ]----------------------------------//
@@ -60,7 +62,7 @@ RA073177::ResultType RA073177::solveFast(const double max_time) {
 }
 
 //------------------------------[ chutaCiclo ]-------------------------------//
-void RA073177::chutaCiclo() {
+list<ListGraph::Node> RA073177::randomSolution() {
 
 	// First we instantiate an vector with all the terminal nodes
 	std::list<ListGraph::Node> tnode;
@@ -70,7 +72,8 @@ void RA073177::chutaCiclo() {
 		}		
 	}
 
-	std::list<ListGraph::Node> sol;
+    // Then we generate a random solution for the problem
+	list<ListGraph::Node> sol;
 	MTRand rand;
 	int i = 0;
 	while (tnode.size() > 0) {
@@ -94,4 +97,30 @@ void RA073177::chutaCiclo() {
 		cout << graph.id(*iter) << " ";
 	}
     cout << endl;
+    return sol;
+}
+
+double RA073177::solutionValue(list<ListGraph::Node> solution) {
+    list<ListGraph::Node>::const_iterator u, v;
+    double value = 0.0;
+    v = solution.begin();
+    
+    for (unsigned int i =0; i < solution.size(); ++i) {
+        u = v++;
+        
+        if (v == solution.end()) v = solution.begin();
+        
+        // Search for the valid edge
+        ListGraph::IncEdgeIt e(graph, *u);
+        for (;e != INVALID; ++e) {
+            if((graph.u(e) == *v) || (graph.v(e) == *v)) {
+                break;
+            } 
+        }
+        
+        if (e == INVALID) return -1;
+        
+        value += length[e];
+    }
+    return value;
 }

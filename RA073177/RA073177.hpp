@@ -52,9 +52,13 @@ class RA073177: public SteinerCycleSolver {
          * minha gordice por procurar coisas gostosas dentro da geladeira
          * (terminais) passando por coisas não tão gostosas (vértices de Steiner).
          */
-        void chutaCiclo();
+        list<ListGraph::Node> randomSolution();
         //@}
 
+        /**
+        * Function that given an solution calculate the value of it
+        */
+        double solutionValue(list<ListGraph::Node> solution);
     protected:
         /** \name Meus parâmetros muito doidos*/
         //{@
