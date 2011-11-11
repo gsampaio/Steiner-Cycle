@@ -20,7 +20,6 @@
 #include "../steiner_cycle_solver.hpp"
 
 // INCLUSÕES ESPECIFICAS DE SEU CÓDIGO
-#include "alg_ze.hpp"
 #include "GRASP.hpp"
 
 /**
@@ -68,7 +67,6 @@ class RA073177: public SteinerCycleSolver {
 
         /** \name Minhas variáveis */
         //{@
-        AlgZe ze;
         Grasp grasp;
         //@}
 };

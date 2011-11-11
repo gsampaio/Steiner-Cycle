@@ -38,15 +38,6 @@ int main(int argc, char* argv[]) {
 
     solver->displayInstance();
 
-    //------------------- Checa se podemos ter ciclos -------------------//
-
-    if(solver->haveTerminalLeaves())
-        cout << "\n\n--->> A instancia " << argv[1]
-             << " nao tem solucao!!" << endl;
-    else
-        cout << "\n\n--->> A instancia " << argv[1]
-             << " pode ter solucao!!" << endl;
-
     //---------------------- Exemplo de otimização ----------------------//
 
     timer.restart();
@@ -56,14 +47,6 @@ int main(int argc, char* argv[]) {
     timer.restart();
     solver->solveFast(31);
     cout << "No solveFast(), gastei " << timer.elapsed() << endl;
-
-    //------------------------ Outras chamadas -------------------------//
-
-    cout << "\nLB & UB & Solution Value & Time(s)\n"
-         << solver->lb << " & "
-         << solver->ub << " & ";
-
-    dynamic_cast<RA073177*>(solver)->chutaCiclo();
 
     //------------------ Testando a uma solução --------------------//
 
@@ -83,17 +66,6 @@ int main(int argc, char* argv[]) {
     default:
         cout << "\n\n++ solucao correta" << endl;
     }
-
-    //--------------------- Exemplo do Mersenne Twister ---------------------//
-
-    // Gerador de números aleatórios com uma seed qualquer
-    MTRand rng(1453264);
-
-    cout << "\n\n Imprimindo alguns numero aleatorios: "
-         << rng.randInt() << " "
-         << rng.randInt() << " "
-         << rng.rand() << " "
-         << rng.rand();
 
     //--------------------- Exemplo de saída ---------------------//
     solver->displaySolution(solver->best_solution);

@@ -16,7 +16,7 @@
 OBJLIB = ../libRA073177.a
 
 #!!! COLOQUE AQUI TODOS OS ARQUIVOS-OBJETOS QUE SERÃO GERADOS POR SEUS FONTES
-OBJS = RA073177.o alg_ze.o GRASP.o
+OBJS = RA073177.o GRASP.o
 
 ###############################################################################
 # Minhas flags/includes/libs locais. Altere somente se necessário.

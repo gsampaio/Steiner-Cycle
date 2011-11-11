@@ -25,8 +25,7 @@ using namespace lemon;
 //-------------------------[ Default Construtor ]----------------------------//
 
 // NÃO SE ESQUEÇA DE CHAMAR O CONSTRUTOR DA CLASSE BASE EM PRIMEIRO LUGAR
-RA073177::RA073177(): SteinerCycleSolver(),
-    ze(), grasp(){}
+RA073177::RA073177(): SteinerCycleSolver(), grasp(){}
 
 //-------------------------[ Default Destructor ]----------------------------//
 
@@ -61,32 +60,38 @@ RA073177::ResultType RA073177::solveFast(const double max_time) {
 }
 
 //------------------------------[ chutaCiclo ]-------------------------------//
-
 void RA073177::chutaCiclo() {
-    // Primeiro, fazemos isso e aquilo usando tal ideia
-    //...
-    //...
-    // Depois, pegamos tal coisa e invertemos usando um 2OPT, etc e tal...
-    //...
-    //...
 
-    //ze.roda();
-    if(grasp == NULL) {
-        prinf("testessssssssss");
-    }
-    grasp.execute();
-   // cout << "\n:-P" << endl;
+	// First we instantiate an vector with all the terminal nodes
+	std::list<ListGraph::Node> tnode;
+	for (ListGraph::NodeIt v(graph); v!= INVALID; ++v) {
+    	if (terminal[v]) {
+			tnode.push_front(v);
+		}		
+	}
 
-    //cout << "\nnodes: ";
-    //for(ListGraph::NodeIt v(graph); v != INVALID; ++v)
-      //   cout << graph.id(v) << ": " << terminal[v] << " | ";
-
-    //cout << "\nedges: ";
-   // for(ListGraph::EdgeIt e(graph); e != INVALID; ++e)
-     //    cout << "(" << graph.id(graph.u(e))
-       //       << "," << graph.id(graph.v(e))
-         //     << "): " << length[e]
-           //   << " | ";
-
+	std::list<ListGraph::Node> sol;
+	MTRand rand;
+	int i = 0;
+	while (tnode.size() > 0) {
+		list<ListGraph::Node>::iterator iter;
+		i = rand.randInt() % tnode.size();
+		int currentNode = 0;
+		ListGraph::Node randNode;
+		for (iter = tnode.begin(); iter != tnode.end(); iter++) {
+			if (currentNode == i) {
+				randNode = *iter;
+				tnode.erase(iter);
+				break;
+			}
+			currentNode++;
+		}
+		sol.push_back(randNode);
+		currentNode = 0;
+	}
+	list<ListGraph::Node>::iterator iter;
+	for(iter = sol.begin(); iter != sol.end(); iter++) {
+		cout << graph.id(*iter) << " ";
+	}
     cout << endl;
 }
