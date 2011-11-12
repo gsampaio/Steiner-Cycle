@@ -59,6 +59,9 @@ class RA073177: public SteinerCycleSolver {
         * Function that given an solution calculate the value of it
         */
         double solutionValue(list<ListGraph::Node> solution);
+        
+        ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
+        
     protected:
         /** \name Meus parâmetros muito doidos*/
         //{@

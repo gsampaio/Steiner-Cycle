@@ -45,7 +45,8 @@ RA073177::ResultType RA073177::solve(const double max_time) {
     list<ListGraph::Node> solution = randomSolution();
     
      cout << "\n--> Valor da minha solução "
-         << solutionValue(solution) << " ."
+         << solutionValue(solution) << " com aresta maxima de peso "
+         << length[maxWeightedEdge(solution)]
          << endl;
     
      return RA073177::EXACT_NO_SOLUTION;
@@ -54,9 +55,9 @@ RA073177::ResultType RA073177::solve(const double max_time) {
 //--------------------------------[ Solve ]----------------------------------//
 
 RA073177::ResultType RA073177::solveFast(const double max_time) {
-    cout << "\n--> Resolvendo mega rapido e magico algoritmo em "
-         << max_time << " segundos."
-         << endl;
+    // cout << "\n--> Resolvendo mega rapido e magico algoritmo em "
+    //      << max_time << " segundos."
+    //      << endl;
 
     return RA073177::FAST_HEURISTIC_NO_SOLUTION;
 }
@@ -123,4 +124,31 @@ double RA073177::solutionValue(list<ListGraph::Node> solution) {
         value += length[e];
     }
     return value;
+}
+
+ListGraph::Edge RA073177::maxWeightedEdge(list<ListGraph::Node> solution) {
+    list<ListGraph::Node>::const_iterator u, v;
+    double max = 0.0;
+    v = solution.begin();
+    ListGraph::Edge maxEdge;
+    for (unsigned int i =0; i < solution.size(); ++i) {
+        u = v++;
+        
+        if (v == solution.end()) v = solution.begin();
+        
+        // Search for the valid edge
+        ListGraph::IncEdgeIt e(graph, *u);
+        for (;e != INVALID; ++e) {
+            if((graph.u(e) == *v) || (graph.v(e) == *v)) {
+                break;
+            } 
+        }
+        
+        if (length[e] > max) {
+            max = length[e];
+            maxEdge = e;
+        }
+    }
+    
+    return maxEdge;
 }
