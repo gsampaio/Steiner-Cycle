@@ -61,6 +61,8 @@ class RA073177: public SteinerCycleSolver {
         double solutionValue(list<ListGraph::Node> solution);
         
         ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
+        void generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Edge e);
+        void copyGraph(ListGraph source, ListGraph destination);
         
     protected:
         /** \name Meus parâmetros muito doidos*/

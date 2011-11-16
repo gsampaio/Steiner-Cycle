@@ -16,6 +16,8 @@
 #include <iostream>
 using namespace std;
 
+#include <lemon/adaptors.h>
+#include <lemon/dijkstra.h>
 #include <lemon/list_graph.h>
 using namespace lemon;
 
@@ -43,12 +45,14 @@ bool RA073177::loadInstance(const char* filename) {
 
 RA073177::ResultType RA073177::solve(const double max_time) {
     list<ListGraph::Node> solution = randomSolution();
-    
+    ListGraph::Edge maxWeighted = maxWeightedEdge(solution);
      cout << "\n--> Valor da minha solução "
          << solutionValue(solution) << " com aresta maxima de peso "
-         << length[maxWeightedEdge(solution)]
+         << length[maxWeighted]
          << endl;
     
+     generateComplementaryGraph(solution, maxWeighted);
+     
      return RA073177::EXACT_NO_SOLUTION;
 }
 
@@ -62,7 +66,7 @@ RA073177::ResultType RA073177::solveFast(const double max_time) {
     return RA073177::FAST_HEURISTIC_NO_SOLUTION;
 }
 
-//------------------------------[ chutaCiclo ]-------------------------------//
+//------------------------------[ randomSolution ]-------------------------------//
 list<ListGraph::Node> RA073177::randomSolution() {
 
 	// First we instantiate an vector with all the terminal nodes
@@ -151,4 +155,85 @@ ListGraph::Edge RA073177::maxWeightedEdge(list<ListGraph::Node> solution) {
     }
     
     return maxEdge;
+}
+
+void RA073177::generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Edge e) {
+    
+    typedef const ListGraph::EdgeMap<double> LengthMap;
+    typedef Dijkstra<const SubGraph<ListGraph>, LengthMap> ShortestPath;
+    
+    ListGraph::NodeMap<bool> node_filter(graph);
+    ListGraph::EdgeMap<bool> edge_filter(graph);
+    list<ListGraph::Node> nodesToRemove;
+    
+    // Create the node_filter
+    for (ListGraph::NodeIt v(graph); v != INVALID; ++v) {
+        cout << "Nó atual " << graph.id(v) << endl;
+        if((graph.u(e) != v) && (graph.v(e) != v)) {
+            list<ListGraph::Node>::iterator iter;
+            for (iter = s.begin(); iter != s.end(); iter++) {
+                cout << "\tatual da solucao = " << graph.id(*iter) <<endl;
+                if(graph.id(v) == graph.id(*iter)) {
+                    cout << "\t\titem " << graph.id(v) << " removido" << endl;
+                    nodesToRemove.push_back(v);
+                    node_filter[v] = false;
+                    break;
+                } else {
+                    node_filter[v] = true;
+                }
+            }
+        } else {
+            node_filter[v] = true;
+        }
+    }
+    
+    // Create the edge_filter
+    for (ListGraph::EdgeIt ed(graph); ed != INVALID; ++ed) {
+        list<ListGraph::Node>::iterator iter;
+        bool value = true;
+        for (iter = nodesToRemove.begin(); iter != nodesToRemove.end(); iter++) {
+            if ( graph.u(ed) == *iter || graph.v(ed) == *iter) {
+                value = false;
+            }
+        }
+        edge_filter[ed] = value;
+    }
+    
+    SubGraph<ListGraph> sg(graph, node_filter, edge_filter);
+    
+    cout << "Nodes " << endl;
+    for (SubGraph<ListGraph>::NodeIt v(sg); v != INVALID; ++v) {
+        cout << "node: " << sg.id(v) << " terminal? " << terminal[v] <<endl;
+    }
+    
+    cout << "Edges " << endl;
+    for (SubGraph<ListGraph>::EdgeIt e(sg); e != INVALID; ++e) {
+        cout << "u: " << sg.id(sg.u(e)) << " v: " << sg.id(sg.v(e)) 
+        << " w: " << length[e] << endl;
+    }
+
+    ShortestPath d(sg, length);
+    d.run(sg.u(e));
+    Path<ListGraph> p = d.path(sg.v(e));
+    list<ListGraph::Node> path;
+    bool first = true;
+    for (Path<ListGraph>::ArcIt it(p); it != INVALID; ++it) {
+        ListGraph::Arc a = it;
+        ListGraph::Edge x = a;
+        if (first) {
+            path.push_front(sg.u(x));
+            path.push_front(sg.v(x));
+            first = false;
+        } else {
+            path.push_front(sg.v(x));
+        }
+    }
+    
+    list<ListGraph::Node>::iterator it;
+    for (it = path.begin(); it != path.end(); it++) {
+        cout << sg.id(*it) << " ";
+    }
+    cout << endl;
+    
+    displayInstance();
 }
