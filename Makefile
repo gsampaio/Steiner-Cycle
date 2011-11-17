@@ -28,6 +28,9 @@ EXE = RA073177.e
 SOURCES = steiner_cycle_solver.cpp main.cpp
 OBJS = $(SOURCES:.cpp=.o)
 
+GV = *.gv
+SVG = *.svg
+
 ###############################################################################
 # Lib and include definitions
 ###############################################################################
@@ -68,7 +71,7 @@ doc:
 
 clean:
 	@echo "--> Cleaning compiled..."
-	$(RM) -rf $(EXE) $(OBJS) $(OBJLIBS)
+	$(RM) -rf $(EXE) $(OBJS) $(OBJLIBS) $(GV) $(SVG)
 	for dir in $(DIRS); do \
 		make -C $$dir clean; \
 	done
