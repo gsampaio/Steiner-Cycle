@@ -10,10 +10,6 @@ The steiner cycle problem consist on given an Graph and a subset of vertices we 
 
 For an rapid search I am going to implement an GRASP heuristic with muilti-start-search. 
 
-## PLI formulation
-
-For an optimal result I am going to use CPLEX or GLPK implementation of PLI. 
-
 ## Dependencies
 
-This project mainly depends on the LEMON C++ Library for Graphs. If you want to run the PLI make sure you have or CPLEX or GLPK installed on your computer.
+This project mainly depends on the LEMON C++ Library for Graphs.
