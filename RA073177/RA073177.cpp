@@ -27,7 +27,7 @@ using namespace lemon;
 //-------------------------[ Default Construtor ]----------------------------//
 
 // NÃO SE ESQUEÇA DE CHAMAR O CONSTRUTOR DA CLASSE BASE EM PRIMEIRO LUGAR
-RA073177::RA073177(): SteinerCycleSolver(), grasp(){}
+RA073177::RA073177(): SteinerCycleSolver(){}
 
 //-------------------------[ Default Destructor ]----------------------------//
 
@@ -44,16 +44,16 @@ bool RA073177::loadInstance(const char* filename) {
 //--------------------------------[ Solve ]----------------------------------//
 
 RA073177::ResultType RA073177::solve(const double max_time) {
-    list<ListGraph::Node> solution = randomSolution();
-    ListGraph::Edge maxWeighted = maxWeightedEdge(solution);
-     cout << "\n--> Valor da minha solução "
-         << solutionValue(solution) << " com aresta maxima de peso "
-         << length[maxWeighted]
-         << endl;
-    
-     generateComplementaryGraph(solution, maxWeighted);
-     
-     return RA073177::EXACT_NO_SOLUTION;
+    // list<ListGraph::Node> solution = randomSolution();
+    // ListGraph::Edge maxWeighted = maxWeightedEdge(solution);
+    //  cout << "\n--> Valor da minha solução "
+    //      << solutionValue(solution) << " com aresta maxima de peso "
+    //      << length[maxWeighted]
+    //      << endl;
+    // 
+    //  findBetterPath(solution, maxWeighted);
+    grasp();
+    return RA073177::EXACT_NO_SOLUTION;
 }
 
 //--------------------------------[ Solve ]----------------------------------//
@@ -157,7 +157,7 @@ ListGraph::Edge RA073177::maxWeightedEdge(list<ListGraph::Node> solution) {
     return maxEdge;
 }
 
-void RA073177::generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Edge e) {
+list<ListGraph::Node> RA073177::findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e) {
     
     typedef const ListGraph::EdgeMap<double> LengthMap;
     typedef Dijkstra<const SubGraph<ListGraph>, LengthMap> ShortestPath;
@@ -200,18 +200,6 @@ void RA073177::generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Ed
     }
     
     SubGraph<ListGraph> sg(graph, node_filter, edge_filter);
-    
-    cout << "Nodes " << endl;
-    for (SubGraph<ListGraph>::NodeIt v(sg); v != INVALID; ++v) {
-        cout << "node: " << sg.id(v) << " terminal? " << terminal[v] <<endl;
-    }
-    
-    cout << "Edges " << endl;
-    for (SubGraph<ListGraph>::EdgeIt e(sg); e != INVALID; ++e) {
-        cout << "u: " << sg.id(sg.u(e)) << " v: " << sg.id(sg.v(e)) 
-        << " w: " << length[e] << endl;
-    }
-
     ShortestPath d(sg, length);
     d.run(sg.u(e));
     Path<ListGraph> p = d.path(sg.v(e));
@@ -229,11 +217,75 @@ void RA073177::generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Ed
         }
     }
     
+    path.reverse();
+    cout << "PATH: ";
     list<ListGraph::Node>::iterator it;
     for (it = path.begin(); it != path.end(); it++) {
         cout << sg.id(*it) << " ";
     }
     cout << endl;
     
-    displayInstance();
+    return path;
+}
+
+list<ListGraph::Node> RA073177::localSearch(list<ListGraph::Node> solution) {
+    list<ListGraph::Node> new_solution;
+    list<ListGraph::Node>::iterator solution_it; 
+    
+    ListGraph::Edge e = maxWeightedEdge(solution);
+    list<ListGraph::Node> path = findBetterPath(solution, e);
+    for (solution_it = solution.begin(); solution_it != solution.end(); solution_it++) {
+        if (graph.u(e) == *solution_it) {
+            list<ListGraph::Node>::iterator path_it; 
+            for (path_it = path.begin(); path_it != path.end(); path_it++) {
+                new_solution.push_back(*path_it);
+            }
+        } else if (graph.v(e) == *solution_it) {
+            continue;
+        } else {
+            new_solution.push_back(*solution_it);
+        }
+    }
+    
+    cout << "NEW SOLUTION: ";
+    list<ListGraph::Node>::iterator it;
+    for (it = new_solution.begin(); it != new_solution.end(); it++) {
+        cout << graph.id(*it) << " ";
+    }
+    cout << endl;
+    
+    return new_solution;
+}
+
+bool RA073177::checkBestSolution(list<ListGraph::Node> solution) {
+    cout << "##### checkBestSolution::BEGIN #####" << endl;
+    cout << "\tBEST_SOLUTION_SIZE = " << best_solution.size() << endl;
+    if (best_solution.size() > 0) {
+        double best_solution_value = solutionValue(best_solution);
+        double sol_value = solutionValue(solution);
+        cout << "\tBEST_SOL_VAL: " << best_solution_value << endl;
+        cout << "\tSOL_VALUE___: " << sol_value << endl;
+        if (best_solution_value > sol_value) {
+            best_solution = solution;
+            solution_value = sol_value;
+        } else if (best_solution_value == solution_value) {
+            return false;
+        }
+    } else {
+        best_solution = solution;
+        double sol_value = solutionValue(solution);
+        solution_value = sol_value;
+    }
+    return true;
+}
+
+void RA073177::grasp() {
+    unsigned int i = 0;
+    ListGraph::Edge e;
+    list<ListGraph::Node> solution = randomSolution();
+    bool troca = checkBestSolution(solution);
+    while (troca && i < num_terminals) {
+        troca = checkBestSolution(localSearch(solution));
+        i++;
+    }
 }

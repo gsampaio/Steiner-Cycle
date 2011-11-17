@@ -61,9 +61,10 @@ class RA073177: public SteinerCycleSolver {
         double solutionValue(list<ListGraph::Node> solution);
         
         ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
-        void generateComplementaryGraph(list<ListGraph::Node> s, ListGraph::Edge e);
-        void copyGraph(ListGraph source, ListGraph destination);
-        
+        list<ListGraph::Node> findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
+        list<ListGraph::Node> localSearch(list<ListGraph::Node> solution);
+        bool checkBestSolution(list<ListGraph::Node> solution);
+        void grasp();
     protected:
         /** \name Meus parâmetros muito doidos*/
         //{@
@@ -76,7 +77,6 @@ class RA073177: public SteinerCycleSolver {
 
         /** \name Minhas variáveis */
         //{@
-        Grasp grasp;
         //@}
 };
 
