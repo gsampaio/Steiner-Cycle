@@ -52,6 +52,7 @@ class RA073177: public SteinerCycleSolver {
          * minha gordice por procurar coisas gostosas dentro da geladeira
          * (terminais) passando por coisas não tão gostosas (vértices de Steiner).
          */
+
         list<ListGraph::Node> randomSolution();
         //@}
 

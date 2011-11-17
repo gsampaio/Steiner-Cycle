@@ -1,10 +1,9 @@
 #include <iostream>
-using namespace std;
 #include "GRASP.hpp"
 
 Grasp::Grasp()
     {}
-void Grasp::execute() {
-    cout<< "testes\n";
-}
 
+void execute(ListGraph *g, lemon::ListGraph::NodeMap<bool>* terminal,lemon::ListGraph::EdgeMap<double>* length){
+    std::cout << "Executing GRASP Meta Heuristic" << std::endl;
+}

@@ -21,6 +21,10 @@ using namespace std;
 #include <lemon/list_graph.h>
 using namespace lemon;
 
+#include <vector>
+
+#include <stdio.h>
+
 #include "RA073177.hpp"
 #include "../mtrand.hpp"
 
@@ -28,7 +32,6 @@ using namespace lemon;
 
 // NÃO SE ESQUEÇA DE CHAMAR O CONSTRUTOR DA CLASSE BASE EM PRIMEIRO LUGAR
 RA073177::RA073177(): SteinerCycleSolver(){}
-
 //-------------------------[ Default Destructor ]----------------------------//
 
 RA073177::~RA073177() {}
@@ -62,15 +65,14 @@ RA073177::ResultType RA073177::solveFast(const double max_time) {
     // cout << "\n--> Resolvendo mega rapido e magico algoritmo em "
     //      << max_time << " segundos."
     //      << endl;
-
     return RA073177::FAST_HEURISTIC_NO_SOLUTION;
 }
 
 //------------------------------[ randomSolution ]-------------------------------//
 list<ListGraph::Node> RA073177::randomSolution() {
-
+    
 	// First we instantiate an vector with all the terminal nodes
-	std::list<ListGraph::Node> tnode;
+	list<ListGraph::Node> tnode;
 	for (ListGraph::NodeIt v(graph); v!= INVALID; ++v) {
     	if (terminal[v]) {
 			tnode.push_front(v);
