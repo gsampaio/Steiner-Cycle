@@ -29,7 +29,7 @@
  *
  * This class contains the description a Steiner Cycle Solver.
  */
-class RA073177: public SteinerCycleSolver {
+class RA073177: public SteinerCycleSolver, GraspDelegate {
     public:
         /** \name Constructor and Destructor */
         //@{
@@ -45,6 +45,11 @@ class RA073177: public SteinerCycleSolver {
 
         virtual bool loadInstance(const char* filename);
         //@}
+        
+        /** \name Inherent Methods from GraspDelegate  */
+        //@{
+        virtual bool didRecivedSolution(list<ListGraph::Node> solution);
+        //}@
 
         /** \name My methods */
         //@{
