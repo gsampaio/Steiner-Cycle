@@ -12,7 +12,8 @@
  * This software is licensed under the Common Public License. Please see
  * accompanying file for terms.
  *****************************************************************************/
-
+ 
+#include <omp.h> 
 #include <iostream>
 using namespace std;
 
@@ -49,30 +50,64 @@ bool RA073177::loadInstance(const char* filename) {
 RA073177::ResultType RA073177::solve(const double max_time) {
     // list<ListGraph::Node> solution = randomSolution();
     // ListGraph::Edge maxWeighted = maxWeightedEdge(solution);
-    //  cout << "\n--> Valor da minha solução "
+    //  //cout << "\n--> Valor da minha solução "
     //      << solutionValue(solution) << " com aresta maxima de peso "
     //      << length[maxWeighted]
     //      << endl;
     // 
     //  findBetterPath(solution, maxWeighted);
-
-    Grasp grasp((GraspDelegate*) this,graph,terminal,length,num_terminals);
-    grasp.execute();
-    return RA073177::EXACT_NO_SOLUTION;
+    // GreedyHeuristic greedy(graph,terminal,length,num_terminals);
+    //best_solution = greedy.execute();
+    
+    int nthreads = omp_get_max_threads();
+    //cout << "NUMERO DE THREADS: " << nthreads << endl;
+    omp_set_num_threads(2);
+    
+    // #pragma omp parallel for
+    // for (int i = 0; i < omp_get_max_threads(); i++) {
+    //     Grasp grasp((GraspDelegate*)this,graph,terminal,length,num_terminals);
+    //     if (i % 2 == 0) {
+    //         grasp.executeWithNoise(max_time);                    
+    //     } else {
+    //         grasp.execute(max_time);                                
+    //     }
+    // }    
+    
+    #pragma omp parallel
+    {
+        #pragma omp sections
+        {
+            #pragma omp section 
+            {
+                //cout << "comecou grasp1" << endl;;
+                Grasp grasp1((GraspDelegate*)this,graph,terminal,length,num_terminals);
+                grasp1.executeWithNoise(max_time);
+                //cout << "acabou grasp1" << endl;;
+            }
+            #pragma omp section 
+            {
+                //cout << "comecou grasp2" << endl;;
+                Grasp grasp2((GraspDelegate*)this,graph,terminal,length,num_terminals);
+                grasp2.execute(max_time);       
+                //cout << "acabou grasp2" << endl;         
+            }
+        }
+        //cout << "ACABOU O METODO";
+    }
+    return RA073177::METAHEURISTIC_SOLUTION;
 }
 
 //--------------------------------[ Solve ]----------------------------------//
 
 RA073177::ResultType RA073177::solveFast(const double max_time) {
-    // cout << "\n--> Resolvendo mega rapido e magico algoritmo em "
+    // //cout << "\n--> Resolvendo mega rapido e magico algoritmo em "
     //      << max_time << " segundos."
     //      << endl;
     return RA073177::FAST_HEURISTIC_NO_SOLUTION;
 }
 
 
-bool RA073177::didRecivedSolution(list<ListGraph::Node> solution) {
-    cout << "teste " << endl;
+double RA073177::didRecivedSolution(list<ListGraph::Node> solution) {
     return checkBestSolution(solution);
 }
 
@@ -101,24 +136,22 @@ double RA073177::solutionValue(list<ListGraph::Node> solution) {
     return value;
 }
 
-bool RA073177::checkBestSolution(list<ListGraph::Node> solution) {
-    cout << "##### checkBestSolution::BEGIN #####" << endl;
-    cout << "\tBEST_SOLUTION_SIZE = " << best_solution.size() << endl;
+double RA073177::checkBestSolution(list<ListGraph::Node> solution) {
+
+    // //cout << "##### checkBestSolution::BEGIN #####" << endl;
+    // //cout << "\tBEST_SOLUTION_SIZE = " << best_solution.size() << endl;
+    double sol_value = solutionValue(solution);
     if (best_solution.size() > 0) {
         double best_solution_value = solutionValue(best_solution);
-        double sol_value = solutionValue(solution);
-        cout << "\tBEST_SOL_VAL: " << best_solution_value << endl;
-        cout << "\tSOL_VALUE___: " << sol_value << endl;
+        // //cout << "\tBEST_SOL_VAL: " << best_solution_value << endl;
+        // //cout << "\tSOL_VALUE___: " << sol_value << endl;
         if (best_solution_value > sol_value) {
             best_solution = solution;
             solution_value = sol_value;
-        } else if (best_solution_value == solution_value) {
-            return false;
         }
     } else {
         best_solution = solution;
-        double sol_value = solutionValue(solution);
         solution_value = sol_value;
     }
-    return true;
+    return sol_value;
 }

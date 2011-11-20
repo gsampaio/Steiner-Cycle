@@ -21,6 +21,7 @@
 
 // INCLUSÕES ESPECIFICAS DE SEU CÓDIGO
 #include "GRASP.hpp"
+#include "Greedy.hpp"
 
 /**
  * \brief My Steiner Cycle Solver class.
@@ -48,7 +49,7 @@ class RA073177: public SteinerCycleSolver, GraspDelegate {
         
         /** \name Inherent Methods from GraspDelegate  */
         //@{
-        virtual bool didRecivedSolution(list<ListGraph::Node> solution);
+        virtual double didRecivedSolution(list<ListGraph::Node> solution);
         //}@
 
         /** \name My methods */
@@ -69,7 +70,7 @@ class RA073177: public SteinerCycleSolver, GraspDelegate {
         ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
         list<ListGraph::Node> findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
         list<ListGraph::Node> localSearch(list<ListGraph::Node> solution);
-        bool checkBestSolution(list<ListGraph::Node> solution);
+        double checkBestSolution(list<ListGraph::Node> solution);
         void grasp();
     protected:
         /** \name Meus parâmetros muito doidos*/
