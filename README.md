@@ -10,6 +10,14 @@ The steiner cycle problem consist on given an Graph and a subset of vertices we 
 
 For an rapid search I am going to implement an GRASP heuristic with muilti-start-search. 
 
+## Greedy Heuristic
+
+This heuristic take the time of O(V^4) to create an solution. It is based on execute Dijkstra for all the terminal nodes searching the best path for each tuple of terminal nodes.
+
+## Executing
+
+Make sure you have lemon installed on your computer then just execute run.sh script and check the out.out file. Make sure to add u+x permission to execute run.sh
+
 ## Dependencies
 
 This project mainly depends on the LEMON C++ Library for Graphs.

@@ -21,6 +21,7 @@
 #include <list>
 #include <vector>
 #include <cmath>
+#include <boost/lexical_cast.hpp>
 #include <lemon/lgf_writer.h>
 using namespace std;
 
@@ -54,11 +55,17 @@ SteinerCycleSolver::SolutionStatus SteinerCycleSolver::checkSolution(
     list<ListGraph::Node>::const_iterator u, v;
     double value_prime = 0.0;
     unsigned term_num = 0;
+    ListGraph::NodeMap<bool> taken(graph, false);
 
     v = solution.begin();
 
     for(unsigned i = 0; i < solution.size(); ++i) {
         u = v++;
+
+        if(taken[*u])
+            return INCORRECT_CYCLE;
+
+        taken[*u] = true;
 
         // Fecha o ciclo
         if(v == solution.end())
@@ -83,7 +90,7 @@ SteinerCycleSolver::SolutionStatus SteinerCycleSolver::checkSolution(
             ++term_num;
     }
 
-    if(abs(value_prime - value) > 0.0001)
+    if(abs(value_prime - value) > 0.00001)
         return INCORRECT_VALUE;
 
     if(term_num != this->num_terminals)
