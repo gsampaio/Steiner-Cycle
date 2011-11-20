@@ -7,7 +7,7 @@
  *     All Rights Reserved.
  *
  *  Created on : Oct 01, 2011 by andrade
- *  Last update: Oct 03, 2011 by andrade
+ *  Last update: Nov 16, 2011 by andrade
  *
  * This software is licensed under the Common Public License. Please see
  * accompanying file for terms.
@@ -23,65 +23,91 @@ using namespace lemon;
 
 #include "timer.hpp"
 #include "mtrand.hpp"
+
+//TODO: Coloque seu reader aqui.
 #include "RA073177/RA073177.hpp"
 
 //-------------------------------[ Main ]------------------------------------//
 
 int main(int argc, char* argv[]) {
-    SteinerCycleSolver* solver = new RA073177();
-    Timer timer;
-
-    //---------------------- Carrega uma instancia ----------------------//
-
-    if(!solver->loadInstance(argv[1]))
-        return -1;
-
-    solver->displayInstance();
-
-    //---------------------- Exemplo de otimização ----------------------//
-
-    timer.restart();
-    solver->solve(12.4);
-    cout << "No solve(), gastei " << timer.elapsed() << endl;
-
-    timer.restart();
-    solver->solveFast(31);
-    cout << "No solveFast(), gastei " << timer.elapsed() << endl;
-
-    //------------------ Testando a uma solução --------------------//
-
-    switch(solver->checkSolution(solver->best_solution, 500.0)) {
-    case SteinerCycleSolver::INCORRECT_CYCLE:
-        cout << "\n\n++ Ciclo incorreto" << endl;
-        break;
-
-    case SteinerCycleSolver::INCORRECT_VALUE:
-        cout << "\n\n++ valor do ciclo incorreto" << endl;
-        break;
-
-    case SteinerCycleSolver::MISSING_TERMINALS:
-        cout << "\n\n++ Ciclo nao cobriu todos terminais" << endl;
-        break;
-
-    default:
-        cout << "\n\n++ solucao correta" << endl;
+    // First read parameters from command line:
+    if(argc < 3) {
+        cerr << "usage: " << argv[0]
+             << " <arquivo-entrada> <tempo-maximo>"
+             << "\nonde: "
+             << "\n - <arquivo-entrada>: uma instancia do problema"
+             << "\n - <tempo-maximo>: tempo maximo que o algoritmo serah executado."
+             << "\n\n AMBOS PARAMETROS SAO NECESSARIOS\n"
+             << endl;
+        return 64;  // BSD usage error code
     }
 
-    //--------------------- Exemplo de saída ---------------------//
-    solver->displaySolution(solver->best_solution);
 
-    char result = 'Y';
+    //TODO: Instancie sua classe aqui.
+    SteinerCycleSolver* solver = new RA073177();
+    Timer timer;
+    double elapsed_time;
 
-    // Formata a saida e imprime os resultados
-    cout << setiosflags(ios::fixed) << setprecision(2)
-         << "\nSolution & Time & Best Solution Value\n"
-         << result << " & "
-         << timer.elapsed() << " & "
-         << (result != 'N'? solver->solution_value : 0.00);
+    // Carrega uma instância
+    if(!solver->loadInstance(argv[1])) {
+        delete solver;
+        return -1;
+    }
 
-    // NÃO PULE LINHA NO FINAL E NÃO USE ENDL. USE FLUSH() AO INVES.
+    // Inicia a otimização
+    timer.restart();
+    SteinerCycleSolver::ResultType result = solver->solve(atof(argv[2]));
+    elapsed_time = timer.elapsed();
+
+    // Testa se a soluação retornada é válida
+    bool solucao_valida = false;
+    switch(solver->checkSolution(solver->best_solution, solver->solution_value)) {
+        case SteinerCycleSolver::INCORRECT_CYCLE:
+            cout << " & Ciclo incorreto";
+            break;
+
+        case SteinerCycleSolver::INCORRECT_VALUE:
+            cout << " & Valor do ciclo incorreto";
+            break;
+
+        case SteinerCycleSolver::MISSING_TERMINALS:
+            cout << " & Ciclo nao cobriu todos terminais";
+            break;
+
+        default:
+            solucao_valida = true;
+    }
+
+    if(solucao_valida) {
+        //--------------------- Exemplo de saída ---------------------//
+        solver->displaySolution(solver->best_solution);
+
+        char result_symbol;
+
+        switch(result) {
+            case SteinerCycleSolver::EXACT_SOLUTION:
+                result_symbol = 'O';
+                break;
+
+            case SteinerCycleSolver::EXACT_VIABLE_SOLUTION:
+            case SteinerCycleSolver::FAST_HEURISTIC_SOLUTION:
+            case SteinerCycleSolver::METAHEURISTIC_SOLUTION:
+                result_symbol = 'Y';
+                break;
+
+            default:
+                result_symbol = 'N';
+        }
+
+        // Formata a saida e imprime os resultados
+        cout << setiosflags(ios::fixed) << setprecision(2)
+             << "\nSolution & Time & Best Solution Value\n"
+             << result_symbol << " & "
+             << elapsed_time << " & "
+             << (result_symbol != 'N'? solver->solution_value : 0.00);
+    }
+
     cout.flush();
-
     delete solver;
     return 0;
 }

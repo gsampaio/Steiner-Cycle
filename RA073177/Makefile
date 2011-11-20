@@ -16,7 +16,7 @@
 OBJLIB = ../libRA073177.a
 
 #!!! COLOQUE AQUI TODOS OS ARQUIVOS-OBJETOS QUE SERÃO GERADOS POR SEUS FONTES
-OBJS = RA073177.o GRASP.o
+OBJS = RA073177.o GRASP.o Greedy.o
 
 ###############################################################################
 # Minhas flags/includes/libs locais. Altere somente se necessário.
@@ -26,7 +26,7 @@ OBJS = RA073177.o GRASP.o
 include ../Makefile.inc
 
 # Altera ou acrescenta outra flags
-#CXXFLAGS += xxxx
+#CXXFLAGS += -fope
 
 # Necessary Include dirs
 #INCLUDES += xxxx

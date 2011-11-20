@@ -60,10 +60,10 @@ USER_FLAGS += -Wall -Wextra -pedantic -fexceptions -O3
 
 # x86-64
 #CPLEXFLAGS = -m64 -pthread -fPIC -fexceptions -DIL_STD -DNDEBUG
-	
+
 # Compiler flags
 #USER_FLAGS += $(CPLEXFLAGS)
-	
+
 ###############################################################################
 # Compiler defs
 ###############################################################################
@@ -72,7 +72,7 @@ USER_FLAGS += -Wall -Wextra -pedantic -fexceptions -O3
 CXX = g++
 
 # C++ Compiler options
-CXXFLAGS = $(USER_FLAGS)
+CXXFLAGS = $(USER_FLAGS) -fopenmp
 CFLAGS = $(USER_FLAGS)
 
 # Necessary Include dirs
