@@ -16,7 +16,7 @@ class GraspDelegate {
          * classe principale e o grasp com intuito de guardar o melhor valor.
          * @return retorna se o algoritmo deve continuar executando
          */
-        virtual bool didRecivedSolution(list<ListGraph::Node> solution) = 0;
+        virtual double didRecivedSolution(list<ListGraph::Node> solution) = 0;
         //@}
 };
 
@@ -40,12 +40,14 @@ class Grasp {
          */
         list<ListGraph::Node> randomSolution();
         //}@
+        list<ListGraph::Node> randomSolutionWithNoise();
 
         ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
         list<ListGraph::Node> findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
         list<ListGraph::Node> localSearch(list<ListGraph::Node> solution);
-        void execute();
-        bool sendSolution(list<ListGraph::Node> solution);
+        double sendSolution(list<ListGraph::Node> solution);
+        void execute(double time);
+        void executeWithNoise(double time);
         
     protected:
         GraspDelegate * delegate;
@@ -53,6 +55,8 @@ class Grasp {
         ListGraph::NodeMap<bool> * terminal;
         ListGraph::EdgeMap<double> * length;
         unsigned int num_terminals;
+        list<ListGraph::Edge> removed;
+        
 };
 
 

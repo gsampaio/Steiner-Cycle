@@ -1,9 +1,11 @@
 #include "GRASP.hpp"
 #include "../mtrand.hpp"
+#include "../timer.hpp"
 
 #include <lemon/list_graph.h>
 #include <lemon/adaptors.h>
 #include <lemon/dijkstra.h>
+
 using namespace lemon;
 
 Grasp::Grasp(GraspDelegate * d,
@@ -50,10 +52,65 @@ list<ListGraph::Node> Grasp::randomSolution() {
 	}
 	list<ListGraph::Node>::iterator iter;
 	for(iter = sol.begin(); iter != sol.end(); iter++) {
-		cout << (*graph).id(*iter) << " ";
+		////cout << (*graph).id(*iter) << " ";
 	}
-    cout << endl;
+    ////cout << endl;
     return sol;
+}
+
+list<ListGraph::Node> Grasp::randomSolutionWithNoise() {
+
+	// First we instantiate an vector with all the terminal nodes
+	list<ListGraph::Node> tnode;
+    list<ListGraph::Node> nonterm;
+	for (ListGraph::NodeIt v(*graph); v!= INVALID; ++v) {
+    	if ((*terminal)[v]) {
+			tnode.push_back(v);
+		} else {
+            nonterm.push_back(v);
+		}		
+	}
+
+    // Then we generate a random solution for the problem
+	list<ListGraph::Node> sol;
+	MTRand rand;
+	while (tnode.size() > 0) {
+        int currentNode = 0; int i= 0;
+		ListGraph::Node randNode;
+		list<ListGraph::Node>::iterator it;
+		
+	    // Add non terminal nodes to solution at a rate of 0.1
+        if (rand.randExc() <= 0.1) {
+            if (nonterm.size() > 0) {
+                currentNode = 0;
+	            i = rand.randInt() % nonterm.size();
+                list<ListGraph::Node>::iterator it;
+                for (it = nonterm.begin(); it != nonterm.end(); it++) {
+                    if (currentNode == i) {
+                        randNode = *it;
+                        nonterm.erase(it);
+                        break;
+                    }
+                    currentNode++;
+                }
+                sol.push_back(randNode);
+            }    
+	    } else {
+    	    i = rand.randInt() % tnode.size();
+    		for (it = tnode.begin(); it != tnode.end(); it++) {
+    			if (currentNode == i) {
+    				randNode = *it;
+    				tnode.erase(it);
+    				break;
+    			}
+    			currentNode++;
+    		}
+    		sol.push_back(randNode);
+    		currentNode = 0;
+	    }
+	}    
+    return sol;    
+
 }
 
 ListGraph::Edge Grasp::maxWeightedEdge(list<ListGraph::Node> solution) {
@@ -70,8 +127,16 @@ ListGraph::Edge Grasp::maxWeightedEdge(list<ListGraph::Node> solution) {
         ListGraph::IncEdgeIt e(*graph, *u);
         for (;e != INVALID; ++e) {
             if(((*graph).u(e) == *v) || ((*graph).v(e) == *v)) {
-                break;
-            } 
+                bool found = false;
+                list<ListGraph::Edge>::iterator eit;
+                for (eit = removed.begin(); eit != removed.end(); eit++){
+                    if (*eit == e) {
+                        found = true;
+                    } 
+                }
+                if (!found) break;
+            }
+
         }
         
         if ((*length)[e] > max) {
@@ -79,7 +144,7 @@ ListGraph::Edge Grasp::maxWeightedEdge(list<ListGraph::Node> solution) {
             maxEdge = e;
         }
     }
-    
+    removed.push_back(maxEdge);
     return maxEdge;
 }
 
@@ -94,13 +159,13 @@ list<ListGraph::Node> Grasp::findBetterPath(list<ListGraph::Node> s, ListGraph::
     
     // Create the node_filter
     for (ListGraph::NodeIt v(*graph); v != INVALID; ++v) {
-        cout << "Nó atual " << (*graph).id(v) << endl;
+        ////cout << "Nó atual " << (*graph).id(v) << endl;
         if(((*graph).u(e) != v) && ((*graph).v(e) != v)) {
             list<ListGraph::Node>::iterator iter;
             for (iter = s.begin(); iter != s.end(); iter++) {
-                cout << "\tatual da solucao = " << (*graph).id(*iter) <<endl;
+                ////cout << "\tatual da solucao = " << (*graph).id(*iter) <<endl;
                 if((*graph).id(v) == (*graph).id(*iter)) {
-                    cout << "\t\titem " << (*graph).id(v) << " removido" << endl;
+                    ////cout << "\t\titem " << (*graph).id(v) << " removido" << endl;
                     nodesToRemove.push_back(v);
                     node_filter[v] = false;
                     break;
@@ -125,8 +190,6 @@ list<ListGraph::Node> Grasp::findBetterPath(list<ListGraph::Node> s, ListGraph::
         edge_filter[ed] = value;
     }
     
-    
-    //FilterNodes<ListGraph> sg(graph, node_filter); 
     SubGraph<ListGraph> sg(*graph, node_filter, edge_filter);
     ShortestPath d(sg, *length);
     d.run(sg.u(e));
@@ -146,13 +209,6 @@ list<ListGraph::Node> Grasp::findBetterPath(list<ListGraph::Node> s, ListGraph::
     }
     
     path.reverse();
-    cout << "PATH: ";
-    list<ListGraph::Node>::iterator it;
-    for (it = path.begin(); it != path.end(); it++) {
-        cout << sg.id(*it) << " ";
-    }
-    cout << endl;
-    
     return path;
 }
 
@@ -175,27 +231,62 @@ list<ListGraph::Node> Grasp::localSearch(list<ListGraph::Node> solution) {
         }
     }
     
-    cout << "NEW SOLUTION: ";
+    ////cout << "NEW SOLUTION: ";
     list<ListGraph::Node>::iterator it;
     for (it = new_solution.begin(); it != new_solution.end(); it++) {
-        cout << (*graph).id(*it) << " ";
+        ////cout << (*graph).id(*it) << " ";
     }
-    cout << endl;
+    ////cout << endl;
     
     return new_solution;
 }
 
-bool Grasp::sendSolution(list<ListGraph::Node> solution) {
+double Grasp::sendSolution(list<ListGraph::Node> solution) {
     return (*delegate).didRecivedSolution(solution);
 }
 
-void Grasp::execute() {
-    unsigned int i = 0;
-    ListGraph::Edge e;
-    list<ListGraph::Node> solution = randomSolution();
-    bool troca = sendSolution(solution);
-    while (troca && i < num_terminals) {
-        troca = sendSolution(localSearch(solution));
-        i++;
+void Grasp::execute(double time) {
+    list<ListGraph::Node>last_solution;
+    //cout << "Executing with no noise add" << endl;
+    Timer t;
+    t.restart();
+    
+
+    // Enquanto temos tempo executa
+    while (t.elapsed() < time - 2) {
+        unsigned int i = 0;
+        list<ListGraph::Node> solution = randomSolution();
+        double value = sendSolution(solution);
+        while (i < num_terminals) {
+            double new_value = sendSolution(localSearch(solution));
+            if (value == new_value) {
+                break;
+            } else {
+                value = new_value;
+            }
+            i++;
+        }
+
+    }
+}
+
+void Grasp::executeWithNoise(double time) {
+    //cout << "Executing with probabilistic noise" << endl;
+    Timer t;
+    t.restart(); 
+    // Enquanto temos tempo executa 
+    while(t.elapsed() < time - 2) {
+        unsigned int i = 0;
+        list<ListGraph::Node> solution = randomSolutionWithNoise();
+        double value = sendSolution(solution);
+        while (i < num_terminals) {
+            double new_value = sendSolution(localSearch(solution));
+            if (value == new_value) {
+                break;
+            } else {
+                value = new_value;
+            }
+            i++;
+        }
     }
 }
