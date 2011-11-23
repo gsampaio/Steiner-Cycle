@@ -42,12 +42,16 @@ class Grasp {
         //}@
         list<ListGraph::Node> randomSolutionWithNoise();
 
-        ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution);
-        list<ListGraph::Node> findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
-        list<ListGraph::Node> localSearch(list<ListGraph::Node> solution);
+        ListGraph::Edge maxWeightedEdge(list<ListGraph::Node> solution, ListGraph::EdgeMap<bool> * visited);
+        list<ListGraph::Node> * findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
+        list<ListGraph::Node> localSearch(list<ListGraph::Node> solution, ListGraph::EdgeMap<bool> * visited);
         double sendSolution(list<ListGraph::Node> solution);
-        void execute(double time);
-        void executeWithNoise(double time);
+        list<ListGraph::Node> execute(double time);
+        list<ListGraph::Node> executeWithNoise(double time);
+        void initVisitedMap(ListGraph::EdgeMap<bool> * visited);
+        double checkBestSolution(list<ListGraph::Node> solution);
+        double solutionValue(list<ListGraph::Node> solution);
+        ListGraph::Edge getRandomEdge(list<ListGraph::Node> solution);
         
     protected:
         GraspDelegate * delegate;
@@ -56,6 +60,8 @@ class Grasp {
         ListGraph::EdgeMap<double> * length;
         unsigned int num_terminals;
         list<ListGraph::Edge> removed;
+        list<ListGraph::Node> best_solution;
+        double solution_value;
         
 };
 
