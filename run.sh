@@ -3,5 +3,7 @@
 make;
 for i in `ls instances`; do \
     echo "Runing $i";
-    ./RA073177.e instances/$i 120 >> out.out; \
+    echo "$i:" >> out.out;
+    ./RA073177.e instances/$i 120 >> out.out; 
+    echo "\n" >>  out.out;\
 done
