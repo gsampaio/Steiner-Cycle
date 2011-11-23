@@ -21,7 +21,6 @@
 #include <list>
 #include <vector>
 #include <cmath>
-#include <boost/lexical_cast.hpp>
 #include <lemon/lgf_writer.h>
 using namespace std;
 
