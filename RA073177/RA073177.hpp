@@ -71,19 +71,12 @@ class RA073177: public SteinerCycleSolver, GraspDelegate {
         list<ListGraph::Node> findBetterPath(list<ListGraph::Node> s, ListGraph::Edge e);
         list<ListGraph::Node> localSearch(list<ListGraph::Node> solution);
         double checkBestSolution(list<ListGraph::Node> solution);
-        void grasp();
     protected:
-        /** \name Meus parâmetros muito doidos*/
-        //{@
-        // Ok, ok... isso é meio POG, mas é um jeito de contornar a limitação
-        // de não poder iniciar constantes no cabeçalho. Usem somente aqui, ok?
 
-        #define TAXA_ALEVINOS       0.7;  ///< Controla a taxa de eclosão de alevinos
-        #define MU_GAMA_ALPHA_ZETA  0.3;  ///< Controla a gerinicência.
-        //@}
 
         /** \name Minhas variáveis */
         //{@
+        unsigned int node_size;
         //@}
 };
 

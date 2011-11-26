@@ -29,7 +29,8 @@ class Grasp {
               ListGraph &g, 
               ListGraph::NodeMap<bool> &t, 
               ListGraph::EdgeMap<double> &l,
-              unsigned int nt);
+              unsigned int nt,
+              unsigned int nn);
         //@}
         
         /** \name Metodos  */
@@ -51,7 +52,12 @@ class Grasp {
         void initVisitedMap(ListGraph::EdgeMap<bool> * visited);
         double checkBestSolution(list<ListGraph::Node> solution);
         double solutionValue(list<ListGraph::Node> solution);
-        ListGraph::Edge getRandomEdge(list<ListGraph::Node> solution);
+        list<ListGraph::Node> greedRandomSolution();
+        list<ListGraph::Node> executeWithGreed(double time);
+        list<ListGraph::Node> executeWithNoiseAndGreed(double time);
+        ListGraph::Edge randomEdge(list<ListGraph::Node> solution);
+        list<ListGraph::Node> twoopt(list<ListGraph::Node> s);
+        
         
     protected:
         GraspDelegate * delegate;
@@ -62,7 +68,7 @@ class Grasp {
         list<ListGraph::Edge> removed;
         list<ListGraph::Node> best_solution;
         double solution_value;
-        
+        unsigned int node_size;
 };
 
 

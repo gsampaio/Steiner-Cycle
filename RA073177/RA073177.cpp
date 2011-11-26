@@ -15,6 +15,13 @@
  
 #include <omp.h> 
 #include <iostream>
+#include <fstream>
+#include <sstream>
+#include <stdexcept>
+#include <limits>
+#include <list>
+#include <vector>
+#include <cmath>
 using namespace std;
 
 #include <lemon/core.h>
@@ -44,13 +51,90 @@ RA073177::~RA073177() {}
 // Se for sobrecarregar esta função, tome cuidado de limpar o grafo antigo.
 // Recomendo chamar o método da classe base primeiro.
 bool RA073177::loadInstance(const char* filename) {
-    return SteinerCycleSolver::loadInstance(filename);
+    // Try to open the file
+    ifstream file(filename, ios::in);
+
+    // Try to read and parse the file
+    try{
+        if(!file) {
+            throw std::runtime_error("Error on open the file.");
+        }
+        else {
+            file.clear();
+            file.exceptions(ifstream::eofbit | ifstream::failbit | ifstream::badbit);
+        }
+
+        // Some local variables.
+        unsigned num_nodes = 0;
+        unsigned num_edges = 0;
+        unsigned u = 0;
+        unsigned v = 0;
+        unsigned i = 0;
+        double cost = 0.0;
+
+        // Get the first line.
+        file >> num_nodes >> num_edges >> num_terminals;
+        
+        // Set internal var value
+        node_size = num_nodes;
+        
+        if(file.fail())
+            throw std::runtime_error("Something is wrong on loading the size of the graph!");
+
+        if(num_nodes < num_terminals)
+            throw std::runtime_error("Number of terminal is greater than number of nodes");
+
+        // Create all nodes first.
+        vector<ListGraph::Node> nodes(num_nodes);
+        for(i = 0; i < num_nodes; ++i)
+            nodes[i] = graph.addNode();
+
+        // Create edges if any.
+        for(i = 0; i < num_edges; ++i) {
+            file >> u >> v >> cost;
+            if(file.fail() || file.eof())
+                throw std::runtime_error("Something is wrong on loading edges!");
+
+            length[graph.addEdge(nodes[u], nodes[v])] = cost;
+        }
+
+        if(i != num_edges)
+            throw std::runtime_error("Number of loaded edges is incorrect!");
+
+        // Load terminals.
+        for(i = 0; i < num_terminals; ++i) {
+            file >> u;
+            if(file.fail() || file.eof())
+                throw std::runtime_error("Something is wrong on loading terminals!");
+
+            terminal[nodes[u]] = true;
+        }
+
+        if(i != num_terminals)
+            throw std::runtime_error("Number of loaded terminals is incorrect!");
+    }
+    catch(exception& e) {
+        cerr << "\n**********************************************************\n"
+             << "Error on " <<  __PRETTY_FUNCTION__
+             <<  ": line " << __LINE__
+             << "\nData file cannot be loaded: " << filename
+             << "\nError: " << e.what()
+             << "\n**********************************************************"
+             << endl;
+
+        file.close();
+        return false;
+    }
+
+    return true;
 }
 
 //--------------------------------[ Solve ]----------------------------------//
 
-RA073177::ResultType RA073177::solve(const double max_time) {    
+RA073177::ResultType RA073177::solve(const double max_time) {
+    // First we get the number max threads
     int nthreads = omp_get_max_threads();
+
     // We set up 4 instances
     if (nthreads > 2) {
         #pragma omp parallel
@@ -59,19 +143,15 @@ RA073177::ResultType RA073177::solve(const double max_time) {
                 {
                     #pragma omp section 
                     {
-                        ListGraph *g1;
-                        ListGraph::NodeMap<bool> * t1 = new ListGraph::NodeMap<bool>(*g1);
-                        ListGraph::EdgeMap<double> * l1 = new ListGraph::EdgeMap<double>(*g1);
-                        ListGraph::NodeMap<ListGraph::Node> * nm1 = new ListGraph::NodeMap<ListGraph::Node>(graph);
-                        ListGraph::EdgeMap<ListGraph::Edge> * em1 = new ListGraph::EdgeMap<ListGraph::Edge>(graph);
-                        graphCopy(graph, *g1).nodeRef(*nm1).edgeRef(*em1).nodeMap(terminal, *t1).edgeMap(length, *l1).run();
-                        Grasp grasp1((GraspDelegate*)this,*g1,terminal,length,num_terminals);            
+                        ListGraph g1;
+                        ListGraph::NodeMap<bool> t1(g1);
+                        ListGraph::EdgeMap<double> l1(g1);
+                        ListGraph::NodeMap<ListGraph::Node> nm1(graph);
+                        ListGraph::EdgeMap<ListGraph::Edge> em1(graph);
+                        graphCopy(graph, g1).nodeRef(nm1).edgeRef(em1).nodeMap(terminal, t1).edgeMap(length, l1).run();
+                        Grasp grasp1((GraspDelegate*)this,g1,terminal,length,num_terminals, node_size);            
+                        //list<ListGraph::Node> sol1 = grasp1.executeWithNoise(max_time);
                         list<ListGraph::Node> sol1 = grasp1.executeWithNoise(max_time);
-                        delete g1;
-                        delete t1;
-                        delete l1;
-                        delete nm1;
-                        delete em1;
                         #pragma omp critical 
                         {
                             checkBestSolution(sol1);                        
@@ -79,63 +159,49 @@ RA073177::ResultType RA073177::solve(const double max_time) {
                     }
                     #pragma omp section 
                     {
-                        ListGraph *g2;
-                        ListGraph::NodeMap<bool> * t2 = new ListGraph::NodeMap<bool>(*g2);
-                        ListGraph::EdgeMap<double> * l2 = new ListGraph::EdgeMap<double>(*g2);
-                        ListGraph::NodeMap<ListGraph::Node> * nm2 = new ListGraph::NodeMap<ListGraph::Node>(graph);
-                        ListGraph::EdgeMap<ListGraph::Edge> * em2 = new ListGraph::EdgeMap<ListGraph::Edge>(graph);
-                        graphCopy(graph, *g2).nodeRef(*nm2).edgeRef(*em2).nodeMap(terminal, *t2).edgeMap(length, *l2).run();
-                        Grasp grasp2((GraspDelegate*)this,*g2,terminal,length,num_terminals);            
-                        list<ListGraph::Node> sol2 = grasp2.executeWithNoise(max_time);
-                        delete g2;
-                        delete t2;
-                        delete l2;
-                        delete nm2;
-                        delete em2;
+                        ListGraph g2;
+                        ListGraph::NodeMap<bool> t2(g2);
+                        ListGraph::EdgeMap<double> l2(g2);
+                        ListGraph::NodeMap<ListGraph::Node> nm2(graph);
+                        ListGraph::EdgeMap<ListGraph::Edge> em2(graph);
+                        graphCopy(graph, g2).nodeRef(nm2).edgeRef(em2).nodeMap(terminal, t2).edgeMap(length, l2).run();
+                        Grasp grasp2((GraspDelegate*)this,g2,terminal,length,num_terminals, node_size);            
+                        //list<ListGraph::Node> sol2 = grasp2.executeWithNoise(max_time);
+                        list<ListGraph::Node> sol2 = grasp2.executeWithGreed(max_time);
                         #pragma omp critical 
                         {
                             checkBestSolution(sol2);                        
-                        }                    
+                        }            
                     }
                 
                     #pragma omp section 
                     {
-                        ListGraph *g3;
-                        ListGraph::NodeMap<bool> * t3 = new ListGraph::NodeMap<bool>(*g3);
-                        ListGraph::EdgeMap<double> * l3 = new ListGraph::EdgeMap<double>(*g3);
-                        ListGraph::NodeMap<ListGraph::Node> * nm3 = new ListGraph::NodeMap<ListGraph::Node>(graph);
-                        ListGraph::EdgeMap<ListGraph::Edge> * em3 = new ListGraph::EdgeMap<ListGraph::Edge>(graph);
-                        graphCopy(graph, *g3).nodeRef(*nm3).edgeRef(*em3).nodeMap(terminal, *t3).edgeMap(length, *l3).run();
-                        Grasp grasp3((GraspDelegate*)this,*g3,terminal,length,num_terminals);            
-                        list<ListGraph::Node> sol3 = grasp3.executeWithNoise(max_time);
-                        delete g3;
-                        delete t3;
-                        delete l3;
-                        delete nm3;
-                        delete em3;
+                        ListGraph g3;
+                        ListGraph::NodeMap<bool> t3(g3);
+                        ListGraph::EdgeMap<double> l3(g3);
+                        ListGraph::NodeMap<ListGraph::Node> nm3(graph);
+                        ListGraph::EdgeMap<ListGraph::Edge> em3(graph);
+                        graphCopy(graph, g3).nodeRef(nm3).edgeRef(em3).nodeMap(terminal, t3).edgeMap(length, l3).run();
+                        Grasp grasp3((GraspDelegate*)this,g3,terminal,length,num_terminals, node_size);            
+                        list<ListGraph::Node> sol3 = grasp3.execute(max_time);
                         #pragma omp critical 
                         {
                             checkBestSolution(sol3);                        
-                        }                    
+                        }              
                     }
                     #pragma omp section 
                     {
-                        ListGraph *g4;
-                        ListGraph::NodeMap<bool> * t4 = new ListGraph::NodeMap<bool>(*g4);
-                        ListGraph::EdgeMap<double> * l4 = new ListGraph::EdgeMap<double>(*g4);
-                        ListGraph::NodeMap<ListGraph::Node> * nm4 = new ListGraph::NodeMap<ListGraph::Node>(graph);
-                        ListGraph::EdgeMap<ListGraph::Edge> * em4 = new ListGraph::EdgeMap<ListGraph::Edge>(graph);
-                        graphCopy(graph, *g4).nodeRef(*nm4).edgeRef(*em4).nodeMap(terminal, *t4).edgeMap(length, *l4).run();
-                        Grasp grasp4((GraspDelegate*)this,*g4,terminal,length,num_terminals);            
-                        list<ListGraph::Node> sol4 = grasp4.executeWithNoise(max_time);
-                        delete g4;
-                        delete t4;
-                        delete l4;
-                        delete nm4;
-                        delete em4;
+                        ListGraph g4;
+                        ListGraph::NodeMap<bool> t4(g4);
+                        ListGraph::EdgeMap<double> l4(g4);
+                        ListGraph::NodeMap<ListGraph::Node> nm4(graph);
+                        ListGraph::EdgeMap<ListGraph::Edge> em4(graph);
+                        graphCopy(graph, g4).nodeRef(nm4).edgeRef(em4).nodeMap(terminal, t4).edgeMap(length, l4).run();
+                        Grasp grasp4((GraspDelegate*)this,g4,terminal,length,num_terminals, node_size);            
+                        list<ListGraph::Node> sol4 = grasp4.execute(max_time);
                         #pragma omp critical 
                         {
-                            checkBestSolution(sol4);
+                            checkBestSolution(sol4);                        
                         }
                     }
             }
@@ -154,8 +220,8 @@ RA073177::ResultType RA073177::solve(const double max_time) {
                     ListGraph::NodeMap<ListGraph::Node> nm1(graph);
                     ListGraph::EdgeMap<ListGraph::Edge> em1(graph);
                     graphCopy(graph, g1).nodeRef(nm1).edgeRef(em1).nodeMap(terminal, t1).edgeMap(length, l1).run();
-                    Grasp grasp1((GraspDelegate*)this,g1,terminal,length,num_terminals);            
-                    list<ListGraph::Node> sol1 = grasp1.executeWithNoise(max_time);
+                    Grasp grasp1((GraspDelegate*)this,g1,terminal,length,num_terminals, node_size);            
+                    list<ListGraph::Node> sol1 = grasp1.execute(max_time);
                     #pragma omp critical 
                     {
                         checkBestSolution(sol1);                        
@@ -169,8 +235,8 @@ RA073177::ResultType RA073177::solve(const double max_time) {
                     ListGraph::NodeMap<ListGraph::Node> nm2(graph);
                     ListGraph::EdgeMap<ListGraph::Edge> em2(graph);
                     graphCopy(graph, g2).nodeRef(nm2).edgeRef(em2).nodeMap(terminal, t2).edgeMap(length, l2).run();
-                    Grasp grasp2((GraspDelegate*)this,g2,terminal,length,num_terminals);
-                    list<ListGraph::Node> sol2 = grasp2.execute(max_time);
+                    Grasp grasp2((GraspDelegate*)this,g2,terminal,length,num_terminals, node_size);
+                    list<ListGraph::Node> sol2 = grasp2.executeWithNoiseAndGreed(max_time);
                     #pragma omp critical 
                     {
                         checkBestSolution(sol2);                        
@@ -179,13 +245,14 @@ RA073177::ResultType RA073177::solve(const double max_time) {
             }
         }
     } else {
+        // For one instance
         ListGraph g1;
         ListGraph::NodeMap<bool> t1(g1);
         ListGraph::EdgeMap<double> l1(g1);
         ListGraph::NodeMap<ListGraph::Node> nm1(graph);
         ListGraph::EdgeMap<ListGraph::Edge> em1(graph);
-        Grasp grasp1((GraspDelegate*)this,graph,terminal,length,num_terminals);
-        list<ListGraph::Node> sol2 = grasp1.executeWithNoise(max_time);
+        Grasp grasp1((GraspDelegate*)this,graph,terminal,length,num_terminals, node_size);
+        list<ListGraph::Node> sol2 = grasp1.execute(max_time);
         checkBestSolution(sol2);
     }
 
@@ -204,6 +271,7 @@ double RA073177::didRecivedSolution(list<ListGraph::Node> solution) {
     return checkBestSolution(solution);
 }
 
+// Calculate the value of the solution
 double RA073177::solutionValue(list<ListGraph::Node> solution) {
     list<ListGraph::Node>::const_iterator u, v;
     double value = 0.0;
@@ -229,15 +297,18 @@ double RA073177::solutionValue(list<ListGraph::Node> solution) {
     return value;
 }
 
+// Store the best solution
 double RA073177::checkBestSolution(list<ListGraph::Node> solution) {
     double sol_value = solutionValue(solution);
     if (best_solution.size() > 0) {
+        // Check for the best solution
         double best_solution_value = solutionValue(best_solution);
         if (best_solution_value > sol_value) {
             best_solution = solution;
             solution_value = sol_value;
         }
     } else {
+        // Case there is no best solution yet we just set it
         best_solution = solution;
         solution_value = sol_value;
     }
